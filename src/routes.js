@@ -1,5 +1,6 @@
 "use strict";
 
+const e = require("express");
 // const Companion = require("./schema/Companion");
 // const Doctor = require("./schema/Doctor");
 
@@ -14,6 +15,11 @@ router.route("/")
         });
     });
 
+const favorites = {
+    'doctors': [],
+    'companions': []
+}
+
 // ---------------------------------------------------
 // Edit below this line
 // ---------------------------------------------------
@@ -23,7 +29,7 @@ const data = require("../config/data.json");
 router.route("/doctors")
     .get((req, res) => {
         console.log("GET /doctors");
-        res.status(200).send(data.doctors)
+        return res.status(200).send(data.doctors)
     })
     .post((req, res) => {
         console.log("POST /doctors");
@@ -34,10 +40,10 @@ router.route("/doctors")
                 seasons: req.body.seasons
             }
             data.doctors.push(doc)
-            res.status(201).send(doc)
+            return res.status(201).send(doc)
         }
         else {
-            res.status(500).send({
+            return res.status(500).send({
                 message: 'Missing data'
             })
         }
@@ -67,20 +73,30 @@ router.route("/doctors/:id")
             seasons = req.body.seasons
         }
         var idx = data.doctors.findIndex(doc => doc._id === req.params.id)
-        if (name !== null){
-            data.doctors[idx].name=name
+        if (idx) {
+            if (name !== null){
+                data.doctors[idx].name=name
+            }
+            if (seasons !== null){
+                data.doctors[idx].seasons=seasons
+            }
+            res.status(200).send(data.doctors[idx])
         }
-        if (seasons !== null){
-            data.doctors[idx].seasons=seasons
+        else {
+            res.status(404).send("Not Found")
         }
-        res.status(200).send(data.doctors[idx])
     })
     .delete((req, res) => {
         console.log(`DELETE /doctors/${req.params.id}`);
-        data.doctors = data.doctors.filter(doc => doc._id !== req.params.id)
-        res.status(200).send({
-            message: 'Deleted'
-        })
+        if (data.doctors.filter(doc => doc._id === req.params.id).length === 0){
+            res.status(404).send("Not Found")
+        }
+        else{
+            data.doctors = data.doctors.filter(doc => doc._id !== req.params.id)
+            res.status(200).send({
+                message: 'Deleted'
+            })
+        }
     });
 
 router.route("/doctors/:id/companions")
@@ -188,29 +204,39 @@ router.route("/companions/:id")
             alive=req.body.alive
         }
         var idx = data.companions.findIndex(comp => comp._id === req.params.id)
-        if (name !== null){
-            data.companions[idx].name=name
+        if (idx){
+            if (name !== null){
+                data.companions[idx].name=name
+            }
+            if (character !== null){
+                data.companions[idx].character=character
+            }
+            if (seasons !== null){
+                data.companions[idx].seasons=seasons
+            }
+            if (doctors !== null){
+                data.companions[idx].doctors=doctors
+            }
+            if (alive !== null){
+                data.companions[idx].alive=alive
+            }
+            res.status(200).send(data.companions[idx])
         }
-        if (character !== null){
-            data.companions[idx].character=character
+        else {
+            res.status(404).send("Not found")
         }
-        if (seasons !== null){
-            data.companions[idx].seasons=seasons
-        }
-        if (doctors !== null){
-            data.companions[idx].doctors=doctors
-        }
-        if (alive !== null){
-            data.companions[idx].alive=alive
-        }
-        res.status(200).send(data.companions[idx])
     })
     .delete((req, res) => {
         console.log(`DELETE /companions/${req.params.id}`);
-        data.companions = data.companions.filter(comp => comp._id !== req.params.id)
-        res.status(200).send({
-            message: 'Deleted'
-        })
+        if (data.companions.filter(comp => comp._id === req.params.id).length === 0){
+            res.status(404).send("Not Found")
+        }
+        else{
+            data.companions = data.companions.filter(comp => comp._id !== req.params.id)
+            res.status(200).send({
+                message: 'Deleted'
+            })
+        }
     });
 
 router.route("/companions/:id/doctors")
@@ -232,7 +258,6 @@ router.route("/companions/:id/doctors")
 router.route("/companions/:id/friends")
     .get((req, res) => {
         console.log(`GET /companions/${req.params.id}/friends`);
-        // res.status(501).send();
         const d1 = data.companions.filter(comp => comp._id == req.params.id)
         if (d1.length === 0) {
             res.status(404).send({
@@ -261,7 +286,7 @@ router.route("/companions/:id/friends")
 router.route("/doctors/favorites")
     .get((req, res) => {
         console.log(`GET /doctors/favorites`);
-        res.status(501).send();
+        // res.status(501).send();
     })
     .post((req, res) => {
         console.log(`POST /doctors/favorites`);
